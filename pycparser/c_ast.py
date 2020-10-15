@@ -28,7 +28,7 @@ def _repr(obj):
         return repr(obj)
 
 class Node(object):
-    __slots__ = ()
+    __slots__ = ('customVal','parentNode')
     """ Abstract base class for AST nodes.
     """
     def __repr__(self):
@@ -105,6 +105,42 @@ class Node(object):
                 showcoord=showcoord,
                 _my_node_name=child_name)
 
+    def replaceChild(self,oldChild,newChild):
+        #Iter over the attributes of the node
+        for i in range(len(self.__slots__)):
+            attrName = self.__slots__[i]
+            #skip attributes which can't be a node or node list
+            if attrName=="name" or attrName=="coord" or attrName== "__weakref__": 
+                continue
+            attr = getattr(self,attrName)
+            #Check for node instance
+            if isinstance(attr,Node):
+                 if id(attr)==id(oldChild):
+                    setattr(self,attrName,newChild)
+                    newChild.parentNode = self
+            #check for node list instance
+            elif isinstance(attr,list):
+                for j in range(len(attr)):
+                    if isinstance(attr[j],Node):
+                        if id(attr[j])==id(oldChild):
+                            attr[j] = newChild
+                            newChild.parentNode = self
+    def addParentToChildren(self):
+         #Iter over the attributes of the node
+        for i in range(len(self.__slots__)):
+            attrName = self.__slots__[i]
+            #skip attributes which can't be a node or node list
+            if attrName=="name" or attrName=="coord" or attrName== "__weakref__": 
+                continue
+            attr = getattr(self,attrName)
+            #Check for node instance
+            if isinstance(attr,Node):
+                attr.parentNode = self
+            #check for node list instance
+            elif isinstance(attr,list):
+                for j in range(len(attr)):
+                    if isinstance(attr[j],Node):
+                        attr[j].parentNode = self
 
 class NodeVisitor(object):
     """ A base NodeVisitor class for visiting c_ast nodes.
@@ -171,6 +207,8 @@ class ArrayDecl(Node):
         self.dim = dim
         self.dim_quals = dim_quals
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -192,6 +230,8 @@ class ArrayRef(Node):
         self.name = name
         self.subscript = subscript
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -214,6 +254,8 @@ class Assignment(Node):
         self.lvalue = lvalue
         self.rvalue = rvalue
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -236,6 +278,8 @@ class BinaryOp(Node):
         self.left = left
         self.right = right
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -255,6 +299,8 @@ class Break(Node):
     __slots__ = ('coord', '__weakref__')
     def __init__(self, coord=None):
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         return ()
@@ -271,6 +317,8 @@ class Case(Node):
         self.expr = expr
         self.stmts = stmts
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -293,6 +341,8 @@ class Cast(Node):
         self.to_type = to_type
         self.expr = expr
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -313,6 +363,8 @@ class Compound(Node):
     def __init__(self, block_items, coord=None):
         self.block_items = block_items
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -332,6 +384,8 @@ class CompoundLiteral(Node):
         self.type = type
         self.init = init
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -353,6 +407,8 @@ class Constant(Node):
         self.type = type
         self.value = value
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -368,6 +424,8 @@ class Continue(Node):
     __slots__ = ('coord', '__weakref__')
     def __init__(self, coord=None):
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         return ()
@@ -389,6 +447,8 @@ class Decl(Node):
         self.init = init
         self.bitsize = bitsize
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -412,6 +472,8 @@ class DeclList(Node):
     def __init__(self, decls, coord=None):
         self.decls = decls
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -430,6 +492,8 @@ class Default(Node):
     def __init__(self, stmts, coord=None):
         self.stmts = stmts
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -449,6 +513,8 @@ class DoWhile(Node):
         self.cond = cond
         self.stmt = stmt
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -468,6 +534,8 @@ class EllipsisParam(Node):
     __slots__ = ('coord', '__weakref__')
     def __init__(self, coord=None):
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         return ()
@@ -482,6 +550,8 @@ class EmptyStatement(Node):
     __slots__ = ('coord', '__weakref__')
     def __init__(self, coord=None):
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         return ()
@@ -498,6 +568,8 @@ class Enum(Node):
         self.name = name
         self.values = values
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -516,6 +588,8 @@ class Enumerator(Node):
         self.name = name
         self.value = value
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -533,6 +607,8 @@ class EnumeratorList(Node):
     def __init__(self, enumerators, coord=None):
         self.enumerators = enumerators
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -551,6 +627,8 @@ class ExprList(Node):
     def __init__(self, exprs, coord=None):
         self.exprs = exprs
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -569,6 +647,8 @@ class FileAST(Node):
     def __init__(self, ext, coord=None):
         self.ext = ext
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -590,6 +670,8 @@ class For(Node):
         self.next = next
         self.stmt = stmt
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -617,6 +699,8 @@ class FuncCall(Node):
         self.name = name
         self.args = args
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -638,6 +722,8 @@ class FuncDecl(Node):
         self.args = args
         self.type = type
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -660,6 +746,8 @@ class FuncDef(Node):
         self.param_decls = param_decls
         self.body = body
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -684,6 +772,8 @@ class Goto(Node):
     def __init__(self, name, coord=None):
         self.name = name
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -700,6 +790,8 @@ class ID(Node):
     def __init__(self, name, coord=None):
         self.name = name
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -716,6 +808,8 @@ class IdentifierType(Node):
     def __init__(self, names, coord=None):
         self.names = names
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -734,6 +828,8 @@ class If(Node):
         self.iftrue = iftrue
         self.iffalse = iffalse
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -757,6 +853,8 @@ class InitList(Node):
     def __init__(self, exprs, coord=None):
         self.exprs = exprs
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -776,6 +874,8 @@ class Label(Node):
         self.name = name
         self.stmt = stmt
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -794,6 +894,8 @@ class NamedInitializer(Node):
         self.name = name
         self.expr = expr
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -815,6 +917,8 @@ class ParamList(Node):
     def __init__(self, params, coord=None):
         self.params = params
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -834,6 +938,8 @@ class PtrDecl(Node):
         self.quals = quals
         self.type = type
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -851,6 +957,8 @@ class Return(Node):
     def __init__(self, expr, coord=None):
         self.expr = expr
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -869,6 +977,8 @@ class Struct(Node):
         self.name = name
         self.decls = decls
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -889,6 +999,8 @@ class StructRef(Node):
         self.type = type
         self.field = field
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -910,6 +1022,8 @@ class Switch(Node):
         self.cond = cond
         self.stmt = stmt
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -932,6 +1046,8 @@ class TernaryOp(Node):
         self.iftrue = iftrue
         self.iffalse = iffalse
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -957,6 +1073,8 @@ class TypeDecl(Node):
         self.quals = quals
         self.type = type
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -977,6 +1095,8 @@ class Typedef(Node):
         self.storage = storage
         self.type = type
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -996,6 +1116,8 @@ class Typename(Node):
         self.quals = quals
         self.type = type
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -1014,6 +1136,8 @@ class UnaryOp(Node):
         self.op = op
         self.expr = expr
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -1032,6 +1156,8 @@ class Union(Node):
         self.name = name
         self.decls = decls
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -1051,6 +1177,8 @@ class While(Node):
         self.cond = cond
         self.stmt = stmt
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
@@ -1071,6 +1199,8 @@ class Pragma(Node):
     def __init__(self, string, coord=None):
         self.string = string
         self.coord = coord
+        self.customVal = None
+        self.addParentToChildren()
 
     def children(self):
         nodelist = []
