@@ -107,7 +107,9 @@ class NodeCfg(object):
 
         for name in self.all_entries + ['coord']:
             src += "        self.%s = %s\n" % (name, name)
-
+        
+        src += "        self.customVal = None\n"
+        src += "        self.addParentToChildren()\n"
         return src
 
     def _gen_children(self):
@@ -199,7 +201,7 @@ def _repr(obj):
         return repr(obj)
 
 class Node(object):
-    __slots__ = ()
+    __slots__ = ('customVal','parentNode')
     """ Abstract base class for AST nodes.
     """
     def __repr__(self):
@@ -275,7 +277,44 @@ class Node(object):
                 nodenames=nodenames,
                 showcoord=showcoord,
                 _my_node_name=child_name)
+    
+    def replaceChild(self,oldChild,newChild):
+        #Iter over the attributes of the node
+        for i in range(len(self.__slots__)):
+            attrName = self.__slots__[i]
+            #skip attributes which can't be a node or node list
+            if attrName=="name" or attrName=="coord" or attrName== "__weakref__": 
+                continue
+            attr = getattr(self,attrName)
+            #Check for node instance
+            if isinstance(attr,Node):
+                 if id(attr)==id(oldChild):
+                    setattr(self,attrName,newChild)
+                    newChild.parentNode = self
+            #check for node list instance
+            elif isinstance(attr,list):
+                for j in range(len(attr)):
+                    if isinstance(attr[j],Node):
+                        if id(attr[j])==id(oldChild):
+                            attr[j] = newChild
+                            newChild.parentNode = self
 
+    def addParentToChildren(self):
+         #Iter over the attributes of the node
+        for i in range(len(self.__slots__)):
+            attrName = self.__slots__[i]
+            #skip attributes which can't be a node or node list
+            if attrName=="name" or attrName=="coord" or attrName== "__weakref__": 
+                continue
+            attr = getattr(self,attrName)
+            #Check for node instance
+            if isinstance(attr,Node):
+                attr.parentNode = self
+            #check for node list instance
+            elif isinstance(attr,list):
+                for j in range(len(attr)):
+                    if isinstance(attr[j],Node):
+                        attr[j].parentNode = self
 
 class NodeVisitor(object):
     """ A base NodeVisitor class for visiting c_ast nodes.
